@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختبار الاقتصاد الهندسي</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #20243a;
+    --border: #2e3354;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --correct: #22c55e;
+    --wrong: #ef4444;
+    --text: #e8eaf6;
+    --muted: #8891b4;
+    --gold: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #1a1d27 0%, #20243a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 24px 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 50% -20%, rgba(79,142,247,.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  header .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  header h1 {
+    font-size: clamp(22px, 5vw, 36px);
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  /* ── PROGRESS BAR ── */
+  #progress-wrap {
+    background: var(--surface);
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  #progress-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  #progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 99px;
+    transition: width .4s ease;
+    width: 0%;
+  }
+  #progress-text {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ── QUIZ CONTAINER ── */
+  #quiz {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 22px 20px;
+    transition: border-color .25s;
+  }
+  .q-card.answered { border-color: transparent; }
+
+  .q-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .q-num {
+    min-width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .q-text {
+    font-size: clamp(15px, 2.5vw, 17px);
+    font-weight: 700;
+    line-height: 1.6;
+    padding-top: 6px;
+  }
+
+  /* ── OPTIONS ── */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, transform .1s;
+    font-size: 15px;
+    font-family: 'Cairo', sans-serif;
+    color: var(--text);
+    text-align: right;
+    width: 100%;
+  }
+  .option:hover:not(:disabled) {
+    background: #252a42;
+    border-color: var(--accent);
+    transform: translateX(-2px);
+  }
+  .option .opt-label {
+    min-width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--border);
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+    transition: background .2s;
+  }
+  .option.correct {
+    background: rgba(34,197,94,.12);
+    border-color: var(--correct);
+  }
+  .option.correct .opt-label { background: var(--correct); color: #fff; }
+  .option.wrong {
+    background: rgba(239,68,68,.1);
+    border-color: var(--wrong);
+  }
+  .option.wrong .opt-label { background: var(--wrong); color: #fff; }
+  .option:disabled { cursor: default; }
+
+  /* ── FEEDBACK ── */
+  .feedback {
+    display: none;
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    align-items: center;
+    gap: 8px;
+  }
+  .feedback.show { display: flex; }
+  .feedback.ok { background: rgba(34,197,94,.15); color: var(--correct); }
+  .feedback.no { background: rgba(239,68,68,.12); color: #f87171; }
+
+  /* ── RESULTS ── */
+  #results {
+    display: none;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+  #results.show { display: block; }
+  .results-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 30px;
+    text-align: center;
+  }
+  .score-ring {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent) var(--pct), var(--border) 0);
+    display: grid; place-items: center;
+    margin: 0 auto 20px;
+    position: relative;
+  }
+  .score-ring::after {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    background: var(--card);
+    border-radius: 50%;
+  }
+  .score-ring span {
+    position: relative;
+    z-index: 1;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--accent);
+  }
+  .results-card h2 {
+    font-size: 24px; font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .results-card p { color: var(--muted); font-size: 15px; margin-bottom: 28px; }
+  .stats {
+    display: flex; gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 22px;
+    min-width: 100px;
+  }
+  .stat .val { font-size: 28px; font-weight: 900; }
+  .stat .lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat.ok .val { color: var(--correct); }
+  .stat.no .val { color: var(--wrong); }
+  .stat.tot .val { color: var(--accent); }
+
+  #restart-btn {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 12px;
+    padding: 14px 36px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity .2s, transform .15s;
+  }
+  #restart-btn:hover { opacity: .88; transform: scale(1.03); }
+
+  /* ── SUBMIT BTN ── */
+  #submit-btn {
+    display: block;
+    max-width: 760px;
+    margin: 0 auto 0;
+    padding: 0 20px;
+  }
+  #submit-btn button {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 700;
+    font-family: 'Cairo', sans-serif;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  #submit-btn button:disabled { opacity: .4; cursor: not-allowed; }
+  #submit-btn button:not(:disabled):hover { opacity: .88; }
+
+  @media(max-width:520px){
+    .q-header { gap: 10px; }
+    .stats { gap: 10px; }
+    .stat { min-width: 80px; padding: 12px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">بنك الأسئلة</div>
+  <h1>الاقتصاد الهندسي</h1>
+  <p>المحاضرة الأولى — 25 سؤالًا من نوع اختيار من متعدد</p>
+</header>
+
+<div id="progress-wrap">
+  <div id="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+  <span id="progress-text">0 / 25</span>
+</div>
+
+<div id="quiz"></div>
+
+<div id="submit-btn">
+  <button id="submitBtn" disabled onclick="showResults()">عرض النتيجة النهائية</button>
+</div>
+
+<div id="results">
+  <div class="results-card">
+    <div class="score-ring" id="scoreRing"><span id="scorePercent">0%</span></div>
+    <h2 id="resultsTitle">النتيجة النهائية</h2>
+    <p id="resultsSub"></p>
+    <div class="stats">
+      <div class="stat ok"><div class="val" id="correctCount">0</div><div class="lbl">إجابات صحيحة</div></div>
+      <div class="stat no"><div class="val" id="wrongCount">0</div><div class="lbl">إجابات خاطئة</div></div>
+      <div class="stat tot"><div class="val">25</div><div class="lbl">إجمالي الأسئلة</div></div>
+    </div>
+    <button id="restart-btn" onclick="restart()">إعادة الاختبار</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {q:"الاقتصاد الهندسي هو العلم الذي يهتم بـ:",opts:["دراسة التضخم والبطالة","تحليل وتقييم البدائل الهندسية اقتصاديًا","دراسة التجارة الدولية","إدارة الموارد البشرية"],ans:1},
+  {q:"الهدف الرئيسي من الاقتصاد الهندسي هو:",opts:["زيادة التعقيد التقني للمشاريع","اختيار البديل الذي يحقق أفضل استخدام للموارد","تقليل عدد البدائل","تجاهل العوامل الاقتصادية"],ans:1},
+  {q:"يهتم الاقتصاد العام بدراسة:",opts:["شراء المعدات الهندسية","اختيار الموردين","العرض والطلب والتضخم","تصميم الشبكات"],ans:2},
+  {q:"الاقتصاد الهندسي يدرس القرار الهندسي باعتباره:",opts:["قرارًا سياسيًا","قرارًا اجتماعيًا","قرارًا استثماريًا","قرارًا إداريًا فقط"],ans:2},
+  {q:"أي مما يلي يُعد مثالًا على قرار اقتصادي هندسي؟",opts:["اختيار لون الجهاز","شراء معدات جديدة أو الاستمرار باستخدام القديمة","تحديد اسم المشروع","اختيار شعار الشركة"],ans:1},
+  {q:"مفهوم الندرة يعني أن:",opts:["الموارد غير محدودة","الحاجات محدودة","الموارد محدودة والحاجات غير محدودة","الموارد والحاجات متساوية"],ans:2},
+  {q:"أي مما يلي يعد موردًا محدودًا؟",opts:["الوقت","الرغبات","الطموحات","الأفكار"],ans:0},
+  {q:"من مهام المهندس عند وجود عدة حلول:",opts:["اختيار أول حل يخطر بباله","تجاهل الكلفة","تحديد البدائل وتحليلها ومقارنتها","اختيار أحدث تقنية دائمًا"],ans:2},
+  {q:"لا يوجد قرار اقتصادي دون وجود:",opts:["إدارة","بدائل","موظفين","تقارير"],ans:1},
+  {q:"البدائل الهندسية هي:",opts:["حلول مختلفة تحقق الهدف نفسه","مشاريع خاسرة","أدوات الصيانة","طرق التمويل"],ans:0},
+  {q:"كلما ارتفع المستوى التقني غالبًا:",opts:["تنخفض الكلفة","تختفي الحاجة للتحليل الاقتصادي","ترتفع الكلفة","تقل الجودة"],ans:2},
+  {q:"السؤال الأساسي الذي يطرحه الاقتصاد الهندسي هو:",opts:["ما هو الحل الأفضل تقنيًا؟","هل العائد يبرر الكلفة؟","ما هو الحل الأسرع؟","ما هو الحل الأحدث؟"],ans:1},
+  {q:"الحل التقني الأفضل:",opts:["هو دائمًا الحل الاقتصادي الأفضل","لا يحتاج لدراسة اقتصادية","ليس دائمًا الحل الاقتصادي الأفضل","يكون الأقل كلفة دائمًا"],ans:2},
+  {q:"أي مما يلي يعد مثالًا من هندسة الحاسبات؟",opts:["شراء خوادم محلية أو استخدام الحوسبة السحابية","دراسة التضخم","قياس البطالة","تحليل التجارة الخارجية"],ans:0},
+  {q:"في هندسة الاتصالات يمكن للاقتصاد الهندسي أن يساعد في:",opts:["اختيار نوع الشبكة","كتابة البرامج فقط","تصميم الشعارات","إدارة الموظفين"],ans:0},
+  {q:"يؤثر القرار الهندسي على:",opts:["الكلفة فقط","الأرباح فقط","الكلفة والإيرادات وعمر المشروع","الشكل الخارجي فقط"],ans:2},
+  {q:"القيمة الزمنية للنقود تعني أن:",opts:["المال اليوم يساوي المال غدًا تمامًا","الزمن لا يؤثر على قيمة المال","المال اليوم ليس كمال الغد","قيمة المال تزداد دائمًا"],ans:2},
+  {q:"يعتبر الزمن عنصرًا أساسيًا لأنه:",opts:["يؤثر على قيمة الأموال والمشاريع","لا يؤثر على القرارات","يخص الإدارة فقط","يخص المحاسبين فقط"],ans:0},
+  {q:"أي مما يلي ليس من الموارد المحدودة؟",opts:["المال","الوقت","الطاقة","الرغبات"],ans:3},
+  {q:"الاقتصاد الهندسي يساعد المهندس على:",opts:["تبرير قراراته بالأرقام","الاستغناء عن التحليل","تجاهل الإدارة","التركيز على الجانب التقني فقط"],ans:0},
+  {q:"عند مقارنة البدائل يجب:",opts:["اختيار الأرخص مباشرة","تحليل كل بديل ومقارنة النتائج","اختيار الأحدث مباشرة","تجاهل العائد"],ans:1},
+  {q:"يعتبر الاقتصاد الهندسي لغة القرار بين:",opts:["المهندس والعميل","المهندس والإدارة","المهندس والمبرمج","المهندس والفني"],ans:1},
+  {q:"أي مما يلي ليس من اهتمامات الاقتصاد العام؟",opts:["التضخم","البطالة","العرض والطلب","شراء معدات جديدة أو قديمة"],ans:3},
+  {q:"إذا ارتفعت الكلفة في مشروع هندسي فمن المفترض أن:",opts:["ينخفض العائد","يختفي الربح","يرتفع العائد بما يبرر الكلفة","لا يحدث شيء"],ans:2},
+  {q:"المشروع قد يكون:",opts:["ناجحًا تقنيًا وخاسرًا اقتصاديًا","ناجحًا اقتصاديًا فقط ومستحيلًا تقنيًا","ناجحًا دائمًا إذا كان تقنيًا ناجحًا","خاسرًا دائمًا إذا استخدم تقنية حديثة"],ans:0},
+];
+
+const labels = ['أ','ب','ج','د'];
+let answered = new Array(25).fill(null);
+
+function buildQuiz(){
+  const container = document.getElementById('quiz');
+  container.innerHTML = '';
+  questions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'q-card';
+    card.id = `card-${qi}`;
+    card.innerHTML = `
+      <div class="q-header">
+        <div class="q-num">${qi+1}</div>
+        <div class="q-text">${q.q}</div>
+      </div>
+      <div class="options">
+        ${q.opts.map((opt, oi) => `
+          <button class="option" onclick="pick(${qi},${oi})" id="opt-${qi}-${oi}">
+            <span class="opt-label">${labels[oi]}</span>${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div class="feedback" id="fb-${qi}"></div>
+    `;
+    container.appendChild(card);
+  });
+  updateProgress();
+}
+
+function pick(qi, oi){
+  if(answered[qi] !== null) return;
+  answered[qi] = oi;
+  const q = questions[qi];
+  const isCorrect = oi === q.ans;
+
+  // Style options
+  q.opts.forEach((_,i) => {
+    const btn = document.getElementById(`opt-${qi}-${i}`);
+    btn.disabled = true;
+    if(i === q.ans) btn.classList.add('correct');
+    else if(i === oi) btn.classList.add('wrong');
+  });
+
+  // Feedback
+  const fb = document.getElementById(`fb-${qi}`);
+  fb.classList.add('show');
+  if(isCorrect){
+    fb.classList.add('ok');
+    fb.innerHTML = '✅ إجابة صحيحة!';
+  } else {
+    fb.classList.add('no');
+    fb.innerHTML = `❌ إجابة خاطئة — الصحيحة: <strong>${labels[q.ans]}) ${q.opts[q.ans]}</strong>`;
+  }
+
+  document.getElementById(`card-${qi}`).classList.add('answered');
+  updateProgress();
+  checkAllAnswered();
+}
+
+function updateProgress(){
+  const done = answered.filter(a => a !== null).length;
+  document.getElementById('progress-bar-fill').style.width = (done/25*100)+'%';
+  document.getElementById('progress-text').textContent = `${done} / 25`;
+}
+
+function checkAllAnswered(){
+  if(answered.every(a => a !== null)){
+    document.getElementById('submitBtn').disabled = false;
+  }
+}
+
+function showResults(){
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('submit-btn').style.display = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+
+  const correct = answered.filter((a,i) => a === questions[i].ans).length;
+  const wrong = 25 - correct;
+  const pct = Math.round(correct/25*100);
+
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('wrongCount').textContent = wrong;
+  document.getElementById('scorePercent').textContent = pct+'%';
+  document.getElementById('scoreRing').style.setProperty('--pct', pct*3.6+'deg');
+
+  let title, sub;
+  if(pct >= 90){ title = '🏆 ممتاز!'; sub = 'أداء رائع، أتقنت المادة بشكل كبير.'; }
+  else if(pct >= 70){ title = '👍 جيد جدًا!'; sub = 'نتيجة جيدة، مع مراجعة بسيطة ستكون ممتازًا.'; }
+  else if(pct >= 50){ title = '📚 مقبول'; sub = 'تحتاج إلى مراجعة بعض المفاهيم الأساسية.'; }
+  else { title = '💡 يحتاج مراجعة'; sub = 'راجع المحاضرة الأولى من البداية وحاول مجددًا.'; }
+
+  document.getElementById('resultsTitle').textContent = title;
+  document.getElementById('resultsSub').textContent = `${sub} (${correct} من 25)`;
+
+  const results = document.getElementById('results');
+  results.classList.add('show');
+  results.scrollIntoView({behavior:'smooth'});
+}
+
+function restart(){
+  answered = new Array(25).fill(null);
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('quiz').style.display = '';
+  document.getElementById('submit-btn').style.display = '';
+  document.getElementById('progress-wrap').style.display = '';
+  document.getElementById('submitBtn').disabled = true;
+  buildQuiz();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+buildQuiz();
+</script>
+</body>
+</html>
